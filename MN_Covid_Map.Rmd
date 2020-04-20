@@ -1,0 +1,26 @@
+---
+title: "MN_Covid_Map"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+
+library(leaflet)
+library(rgdal)
+
+```
+
+## County Maps
+
+
+```{r cars}
+# From https://www.census.gov/geo/maps-data/data/cbf/cbf_state.html
+states <- readOGR("shp/cb_2013_us_state_20m.shp",
+  layer = "cb_2013_us_state_20m", GDAL1_integer64_policy = TRUE)
+
+
+
+```
