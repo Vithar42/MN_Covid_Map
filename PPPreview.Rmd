@@ -1,0 +1,137 @@
+---
+title: "PPP Breakdowns"
+author: "Nick Johnson"
+date: "4/21/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(tidyverse)
+library(hrbrthemes)
+
+# PPP Data from SBA powerpoint ----
+StatePPP <- tribble(
+  ~apr, ~state, ~qtyLoans, ~Amount,
+  #--|--|--|--        
+  "AL", "Alabama",        27922,   4862690120,
+  "AK", "Alaska",         4842,     921927504,
+  "AZ", "Arizona",        19280,   4846959062,
+  "AR", "Arkansas",       21754,   2722726557,
+  "CA", "California",     112967, 33413693192,
+  "CO", "Colorado",       41635,   7392960359,
+  "CT", "Connecticut",    18435,   4151934451,
+  "DE", "Delaware",       5171,    1090415848,
+  "FL", "Florida",        88997,  17863199837,
+  "GA", "Georgia",        48332,   9464475442,
+  "HI", "Hawaii",         11553,   2046450982,
+  "ID", "Idaho",          13627,   1850034026,
+  "IL", "Illinois",       69893,  15972578071,
+  "IN", "Indiana",        35990,   7491445351,
+  "IA", "Iowa",           29424,   4315688444,
+  "KS", "Kansas",         26245,   4288652108,
+  "KY", "Kentucky",       23797,   4149467684,
+  "LA", "Louisiana",      26635,   5100534501,
+  "ME", "Maine",          14993,   1944425549,
+  "MD", "Maryland",       26068,   6537733687,
+  "MA", "Massachusetts",  46937,  10360907178,
+  "MI", "Michigan",       43438,  10381310070,
+  "MN", "Minnesota",      46383,   9014060040,
+  "MS", "Mississippi",    20748,   2481000606,
+  "MO", "Missouri",       46481,   7547822023,
+  "MT", "Montana",        13456,   1470300136,
+  "NE", "Nebraska",       23477,   2988890489,
+  "NV", "Nevada",          8674,   2013939889, 
+  "NH", "New Hampshire",  11582,   2006858477,
+  "NJ", "New Jersey",     33519,   9527794260,
+  "NM", "New Mexico",      8277,   1424408711,
+  "NY", "New York",       81075,  20345681101,
+  "NC", "North Carolina", 39520,   8005752270,
+  "ND", "North Dakota",   11002,   1548384035,
+  "OH", "Ohio",           59800,  14108889927,
+  "OK", "Oklahoma",       35557,   4615708450,
+  "OR", "Oregon",         18732,   3806104476,
+  "PA", "Pennsylvania",   69567,  15697648689,
+  "RI", "Rhode Island",    7732,   1335777801,
+  "SC", "South Carolina", 22933,   3807578397,
+  "SD", "South Dakota",   11324,   1369616339,
+  "TN", "Tennessee",      34035,   6542045089,
+  "TX", "Texas",         134737,  28483710273,
+  "UT", "Utah",           21257,   3695399459,
+  "VT", "Vermont",         6983,   1000127478,
+  "VA", "Virginia",       40371,   8721170223,
+  "WA", "Washington",     30421,   6959680159,
+  "WV", "West Virginia",   7861,   1351223328,
+  "WI", "Wisconsin",      43395,   8317705842,
+  "WY", "Wyoming",         7618,    837018372
+)
+
+# State Populcations from US census ----
+filename <-  "https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/national/totals/nst-est2019-alldata.csv"
+statePop <-  read.csv(file.path(filename), check.names=FALSE, stringsAsFactors=FALSE) %>%
+  select(state = NAME, pop = CENSUS2010POP )
+
+
+# JOin Data ----
+df <- StatePPP %>%
+  left_join(statePop) %>%
+  mutate(PPPpC = Amount / pop,
+         PPPnC = qtyLoans / pop,
+         AvgLoan = Amount / qtyLoans,
+         mycolor = if_else(PPPpC>mean(df$PPPpC),1,0))
+
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r summarydf}
+
+summary(df)
+
+```
+
+
+
+```{r}
+
+
+df %>%
+  arrange(PPPpC) %>%    # First sort by val. This sort the dataframe but NOT the factor levels
+  mutate(state=factor(state, levels = state)) %>%
+  ggplot( aes(x = state, y = PPPpC)) +
+  geom_segment( aes(xend = state, yend = 0, color=mycolor), size = 1.3, alpha = 0.9) +
+  geom_point( size = , color = "orange") +
+  coord_flip() +
+  theme_light() +
+  theme(
+    legend.position = "none",
+    panel.border = element_blank(),
+  )
+  xlab("")
+  
+p <- ggplot(df, aes(x = state, y = PPPpC)) +
+  geom_segment( aes(x = state, xend = state, y = 0, yend = PPPpC ), 
+                color = ifelse(df$state %in% c("Minnesota"), "orange", "grey"), 
+                 size = ifelse(df$state %in% c("Minnesota"), 1.3, 0.7) ) +
+  geom_point( color = ifelse(df$state %in% c("Minnesota"), "orange", "grey"), 
+               size = ifelse(df$state %in% c("Minnesota"), 5, 2) ) +
+ # theme_ipsum() +
+  coord_flip() +
+  theme(
+    legend.position="none"
+  ) +
+  xlab("") +
+  ylab("Value of Y") +
+  ggtitle("How did groups A and D perform?")
+
+p
+# Add annotation
+
+```
+
